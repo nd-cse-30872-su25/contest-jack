@@ -12,10 +12,7 @@ def find_sum_path(target: int, tree: list[int], curr_index: int, path: list[int]
     right_child = 2 * curr_index + 2
 
     # if at a leaf node and target is deplenished
-    if target == tree[curr_index] and (
-        (left_child >= len(tree) or tree[left_child] == 0) and
-        (right_child >= len(tree) or tree[right_child] == 0)
-    ):
+    if target == 0 and (left_child >= len(tree) or tree[left_child] == 0) and (right_child >= len(tree) or tree[right_child] == 0):
         result.append(path[:])
         return
     
@@ -24,9 +21,9 @@ def find_sum_path(target: int, tree: list[int], curr_index: int, path: list[int]
         return
     
     # run recursion on left and right children
-    if left_child < len(tree):
+    if left_child < len(tree) and tree[left_child] != 0:
         find_sum_path(target - tree[left_child], tree, left_child, path + [tree[left_child]], result)
-    if right_child < len(tree):
+    if right_child < len(tree) and tree[right_child] != 0:
         find_sum_path(target - tree[right_child], tree, right_child, path + [tree[right_child]], result)
 
     return result
@@ -47,7 +44,7 @@ def main():
         paths = find_sum_path(target - tree[0], tree, 0, [tree[0]], [])
         if paths:
             for path in sorted(paths):
-                print(f"{target}: {' '.join(list(map(str, path)))}")
+                print(f"{target}: {', '.join(list(map(str, path)))}")
 
 
 
