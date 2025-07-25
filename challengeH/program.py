@@ -39,9 +39,13 @@ def parse_input() -> tuple[dict[tuple[str, str], list[str]], dict[str, tuple[str
 
     # post-parsing to add in-law relationships
     for parent1, parent2 in parents_to_children.keys():
-        try:
+        if parent2 not in children_to_parents and parent1 not in children_to_parents:
+            continue
+        elif parent2 not in children_to_parents:
             children_to_parents[parent2] = children_to_parents[parent1]
-        except KeyError:
+        elif parent1 not in children_to_parents:
+            children_to_parents[parent1] = children_to_parents[parent2]
+        else:
             continue
 
     # return tuple of dicts and gifters list
@@ -53,25 +57,36 @@ def find_niece_neph(gifter: str, parents_to_children, children_to_parents) -> li
     if not gifter in children_to_parents:
         return None
 
-    # find parents of gifter
-    parents  = children_to_parents[gifter]
-
-    # locate marreid pair of gifter if it exists
+    # find married pair of the gifter
     married_pair = None
-    for parent_pair in parents_to_children.keys():
-        if gifter in parent_pair:
-            married_pair = tuple(parent_pair)
+    for pair in parents_to_children:
+        if gifter in pair:
+            married_pair = pair
+            break
 
-    # find siblings/siblings-in-law of married pair for gifter (disclude gifter and spouse)
+    # find biological siblings of gifter
+    bio_siblings = []
+    bio_parents = children_to_parents.get(gifter)
+    if bio_parents:
+        bio_siblings = [s for s in parents_to_children[bio_parents] if s != gifter and (s not in married_pair if married_pair else True)]
+
+    # find in-law siblings of gifter
+    spouse = None
+
+    # find the spouse of gifter
     if married_pair:
-        siblings = [sibling for sibling in parents_to_children[parents] if not sibling in married_pair]
-    else:
-        siblings = [sibling for sibling in parents_to_children[parents] if sibling != gifter]
+        spouse = married_pair[1] if married_pair[0] == gifter else married_pair[0]
 
-    # add all of siblings' children to recipient set (set so there are no duplicates)
+    # find the in-law siblings of the spouse
+    inlaw_siblings = []
+    spouse_parents = children_to_parents.get(spouse)
+    if spouse_parents:
+        inlaw_siblings = [s for s in parents_to_children[spouse_parents] if s != spouse and (s not in married_pair if married_pair else True)]
+
+    # collect children of all siblings and in-law siblings
     recipients = set()
-    for sibling in siblings:
-        for pair in parents_to_children.keys():
+    for sibling in bio_siblings + inlaw_siblings:
+        for pair in parents_to_children:
             if sibling in pair:
                 for child in parents_to_children[pair]:
                     recipients.add(child)
